@@ -19,9 +19,6 @@
         #####  set defaults if not set
 
         git_module=${git_module:-on}
-        svn_module=${svn_module:-off}
-        hg_module=${hg_module:-on}
-        vim_module=${vim_module:-on}
         virtualenv_module=${virtualenv_module:-on}
         error_bell=${error_bell:-off}
         cwd_cmd=${cwd_cmd:-\\w}
@@ -72,8 +69,6 @@
         ################# make PARSE_VCS_STATUS
         unset PARSE_VCS_STATUS
         [[ $git_module = "on" ]]   &&   type git >&/dev/null   &&   PARSE_VCS_STATUS+="parse_git_status"
-        [[ $svn_module = "on" ]]   &&   type svn >&/dev/null   &&   PARSE_VCS_STATUS+="${PARSE_VCS_STATUS+||}parse_svn_status"
-        [[ $hg_module  = "on" ]]   &&   type hg  >&/dev/null   &&   PARSE_VCS_STATUS+="${PARSE_VCS_STATUS+||}parse_hg_status"
                                                                     PARSE_VCS_STATUS+="${PARSE_VCS_STATUS+||}return"
         ################# terminfo colors-16
         #
@@ -346,69 +341,6 @@ set_shell_label() {
                 color_who_where=''
         fi
 
-
-parse_svn_status() {
-
-        [[   -d .svn  ]] || return 1
-
-        vcs=svn
-
-        ### get rev
-        eval `
-            svn info |
-                sed -n "
-                    s@^URL[^/]*//@repo_dir=@p
-                    s/^Revision: /rev=/p
-                "
-        `
-        ### get status
-
-        unset status modified added clean init added mixed untracked op detached
-        eval `svn status 2>/dev/null |
-                sed -n '
-                    s/^A...    \([^.].*\)/modified=modified;             modified_files[${#modified_files[@]}]=\"\1\";/p
-                    s/^M...    \([^.].*\)/modified=modified;             modified_files[${#modified_files[@]}]=\"\1\";/p
-                    s/^\?...    \([^.].*\)/untracked=untracked;  untracked_files[${#untracked_files[@]}]=\"\1\";/p
-                '
-        `
-        # TODO branch detection if standard repo layout
-
-        [[  -z $modified ]]   &&  [[ -z $untracked ]]  &&  clean=clean
-        vcs_info=svn:r$rev
- }
-
-parse_hg_status() {
-
-        # ☿
-        hg_root=`hg root 2>/dev/null` || return 1
-
-        vcs=hg
-
-        ### get status
-        unset status modified added clean init added mixed untracked op detached
-
-        eval `hg status 2>/dev/null |
-                sed -n '
-                        s/^M \([^.].*\)/modified=modified; modified_files[${#modified_files[@]}]=\"\1\";/p
-                        s/^A \([^.].*\)/added=added; added_files[${#added_files[@]}]=\"\1\";/p
-                        s/^R \([^.].*\)/added=added;/p
-                        s/^! \([^.].*\)/modified=modified;/p
-                        s/^? \([^.].*\)/untracked=untracked; untracked_files[${#untracked_files[@]}]=\\"\1\\";/p
-        '`
-
-        branch=`hg branch 2> /dev/null`
-
-        [[ -f $hg_root/.hg/bookmarks.current ]] && bookmark=`cat "$hg_root/.hg/bookmarks.current"`
-
-        [[ -z $modified ]]   &&   [[ -z $untracked ]]   &&   [[ -z $added ]]   &&   clean=clean
-        vcs_info=${branch/default/D}
-        if [[ "$bookmark" ]] ;  then
-                vcs_info+=/$bookmark
-        fi
- }
-
-
-
 parse_git_status() {
 
         # TODO add status: LOCKED (.git/index.lock)
@@ -576,33 +508,6 @@ parse_vcs_status() {
         eval vcs_color="\${${status}_vcs_color}"
                                 # no def:  vcs_color=${vcs_color:-$WHITE}    # default
 
-
-        ### VIM
-
-        if  [[ $vim_module = "on" ]] ;  then
-                # equivalent to vim_glob=`ls .*.vim`  but without running ls
-                unset vim_glob vim_file vim_files
-                old_nullglob=`shopt -p nullglob`
-                    shopt -s nullglob
-                    vim_glob=`echo .*.sw?`
-                eval $old_nullglob
-
-                if [[ $vim_glob ]];  then
-                    set $vim_glob
-                    #vim_file=${vim_glob#.}
-                    if [[ $# > 1 ]] ; then
-                            vim_files="*"
-                    else
-                            vim_file=${1#.}
-                            vim_file=${vim_file/.sw?/}
-                            [[ .${vim_file}.swp -nt $vim_file ]]  && vim_files=$vim_file
-                    fi
-                    # if swap is newer,  then this is unsaved vim session
-                    # [temoto custom] if swap is older, then it must be deleted, so show all swaps.
-                fi
-        fi
-
-
         ### file list
         unset file_list
         if [[ $count_only = "on" ]] ; then
@@ -614,7 +519,6 @@ parse_vcs_status() {
                 [[ ${modified_files[0]}  ]]  &&  file_list+=" "$modified_vcs_color${modified_files[@]}
                 [[ ${untracked_files[0]} ]]  &&  file_list+=" "$untracked_vcs_color${untracked_files[@]}
         fi
-        [[ ${vim_files}          ]]  &&  file_list+=" "${MAGENTA}vim:${vim_files}
 
         if [[ ${#file_list} -gt $max_file_list_length ]]  ;  then
                 file_list=${file_list:0:$max_file_list_length}
@@ -715,5 +619,3 @@ prompt_command_function() {
         enable_set_shell_label
 
         unset rc id tty modified_files file_list
-
-# vim: set ft=sh ts=8 sw=8 et:
