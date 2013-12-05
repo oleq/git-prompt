@@ -365,12 +365,12 @@ parse_git_status() {
         eval " $(
                 git status 2>/dev/null |
                     sed -n '
-                        s/^\(# \|\)On branch /branch=/p
+                        s/^\(# \)\{0,1\}On branch /branch=/p
                         s/^nothing to commi.*/clean=clean/p
-                        s/^\(# \|\)Initial commi.*/init=init/p
-                        s/^\(# \|\)Your branch is ahead of .\+ by [[:digit:]]\+ commit.*/freshness=${WHITE}↑/p
-                        s/^\(# \|\)Your branch is behind .\+ by [[:digit:]]\+ commit.*/freshness=${YELLOW}↓/p
-                        s/^\(# \|\)Your branch and .\+ have diverged.*/freshness=${YELLOW}↕/p
+                        s/^\(# \)\{0,1\}Initial commi.*/init=init/p
+                        s/^\(# \)\{0,1\}Your branch is ahead of .\+ by [[:digit:]]\+ commit.*/freshness=${WHITE}↑/p
+                        s/^\(# \)\{0,1\}Your branch is behind .\+ by [[:digit:]]\+ commit.*/freshness=${YELLOW}↓/p
+                        s/^\(# \)\{0,1\}Your branch and .\+ have diverged.*/freshness=${YELLOW}↕/p
                     '
         )"
 
