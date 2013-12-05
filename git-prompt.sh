@@ -358,7 +358,7 @@ parse_git_status() {
 	modified_files=()
 	untracked_files=()
 
-        unset branch status modified added clean init added mixed untracked op detached
+        unset branch status modified added clean init added mixed untracked op detached freshness
 
 	# info not in porcelain status
         eval " $(
