@@ -357,7 +357,6 @@ parse_git_status() {
 	added_files=()
 	modified_files=()
 	untracked_files=()
-        [[ $rawhex_len -gt 0 ]]  && freshness="$dim="
 
         unset branch status modified added clean init added mixed untracked op detached
 
@@ -368,9 +367,9 @@ parse_git_status() {
                         s/^\(# \)\{0,1\}On branch /branch=/p
                         s/^nothing to commi.*/clean=clean/p
                         s/^\(# \)\{0,1\}Initial commi.*/init=init/p
-                        s/^\(# \)\{0,1\}Your branch is ahead of .\+ by [[:digit:]]\+ commit.*/freshness=${WHITE}↑/p
-                        s/^\(# \)\{0,1\}Your branch is behind .\+ by [[:digit:]]\+ commit.*/freshness=${YELLOW}↓/p
-                        s/^\(# \)\{0,1\}Your branch and .\+ have diverged.*/freshness=${YELLOW}↕/p
+                        s/^\(# \)\{0,1\}Your branch is ahead of .* by [[:digit:]]* commit.*/freshness="${WHITE}↑"/p
+                        s/^\(# \)\{0,1\}Your branch is behind .* by [[:digit:]]* commit.*/freshness="${YELLOW}↓"/p
+                        s/^\(# \)\{0,1\}Your branch and .* have diverged.*/freshness="${YELLOW}↕"/p
                     '
         )"
 
@@ -476,7 +475,7 @@ parse_git_status() {
                         fi
                         #branch="<$branch>"
                 fi
-                vcs_info="$branch$freshness$rawhex"
+                vcs_info="$branch$freshness $rawhex"
 
         fi
  }
